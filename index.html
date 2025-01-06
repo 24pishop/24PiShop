@@ -1,0 +1,220 @@
+إليك الكود المحدث بعد دمج معرف التطبيق (App ID) الخاص بك مع SDK الخاص بـ Pi App Platform. لقد قمت بتحديث الجزء المخصص لـ `YOUR_APP_ID` بالمعلومات الخاصة بك:
+
+```html
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi24Shop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            position: fixed;
+            width: 100%;
+            z-index: 101;
+        }
+        .cart-section {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 300px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 120px 20px 20px 20px;
+        }
+        .product-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .product-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .product-name {
+            font-size: 1.2em;
+            margin: 10px 0;
+            color: #333333;
+        }
+        .product-price {
+            font-size: 1em;
+            color: #007bff;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        .button-3d {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button-3d:hover {
+            background-color: #0056b3;
+        }
+        .cart-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="button-3d" onclick="login()">تسجيل الدخول</button>
+    </div>
+
+    <div class="cart-section" id="cartSection">
+        <h2>سلة الشراء</h2>
+        <div class="cart-list">
+            <ul id="cartItems"></ul>
+        </div>
+        <button class="button-3d" onclick="clearCart()">مسح السلة</button>
+        <button class="button-3d" onclick="checkout()">شراء الآن</button>
+    </div>
+
+    <div class="container">
+        <div class="product-card">
+            <img src="https://via.placeholder.com/150" alt="منتج 1" class="product-image">
+            <div class="product-name">منتج 1</div>
+            <div class="product-price">100 ج.م</div>
+            <button class="button-3d" onclick="addToCart('منتج 1', 100)">شراء</button>
+        </div>
+        <!-- أضف المزيد من المنتجات هنا -->
+    </div>
+
+    <button class="cart-icon" onclick="toggleCart()">🛒</button>
+
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePrivacyPolicy()">&times;</span>
+            <h2>سياسة الخصوصية</h2>
+            <p>نلتزم بحماية خصوصيتك...</p>
+            <button class="button-3d" onclick="closePrivacyPolicy()">اغلاق</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pi-network-sdk"></script>
+    <script>
+        const pi = new PiNetworkSDK({
+            appId: 'y6', // معرف التطبيق الخاص بك
+            appSecret: '54ce69e597ca5c5737f3facf13f99d348de7d3587d45e677c4c291305fb1d11f599df01273f43c189dbbacc341d7df061d8e85bf1fde9dcafe3b8dceb4974635'  // مفتاحك
+        });
+
+        let cart = [];
+
+        async function login() {
+            try {
+                const user = await pi.login();
+                alert(`تم تسجيل الدخول بنجاح! مرحبًا ${user.username}`);
+            } catch (error) {
+                console.error('خطأ في تسجيل الدخول:', error);
+                alert('فشل تسجيل الدخول. تحقق من بيانات الاعتماد الخاصة بك.');
+            }
+        }
+
+        function addToCart(name, price) {
+            cart.push({ name, price });
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartItemsList = document.getElementById('cartItems');
+            cartItemsList.innerHTML = '';
+            cart.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.name} - ${item.price} ج.م`;
+                cartItemsList.appendChild(li);
+            });
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCart();
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('سلة الشراء فارغة!');
+                return;
+            }
+            let total = cart.reduce((acc, item) => acc + item.price, 0);
+            alert(`شكراً! لقد قمت بالشراء بمبلغ إجمالي قدره ${total} ج.م`);
+            clearCart();
+        }
+
+        function toggleCart() {
+            const cartSection = document.getElementById('cartSection');
+            cartSection.style.display = cartSection.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function closePrivacyPolicy() {
+            document.getElementById('privacyModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
